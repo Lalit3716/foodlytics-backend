@@ -3,10 +3,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
+from fastapi import UploadFile, File
+from dotenv import load_dotenv
+from google import genai
+from google.genai import types
+import os
 import models
 import schemas
 import auth
 from database import engine, get_db
+
+load_dotenv()
+
+# Configure Genai client
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
@@ -67,6 +77,32 @@ async def login_for_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@app.post("/upload_image")
+async def upload_image(
+    image: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_active_user),
+):
+    image_path = f"uploads/{image.filename}"
+    with open(image_path, "wb") as f:
+        f.write(await image.read())
+    
+    myfile = client.files.upload(file=image_path)
+
+    result = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=[
+            myfile,
+            "\n\n",
+            "Can you tell me what you see in this image?",
+        ],
+    )
+
+    # Remove the image file
+    os.remove(image_path)
+    return {"message": result.text}
 
 
 @app.get("/users/me", response_model=schemas.User)
