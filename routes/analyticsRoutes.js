@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { protect } = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/auth");
 const {
   getDashboard,
   getDailyStats,
@@ -23,4 +23,4 @@ router.get("/nutrition", getNutritionBreakdown);
 // Reset analytics
 router.delete("/reset", resetAnalytics);
 
-module.exports = router; 
+module.exports = router;
