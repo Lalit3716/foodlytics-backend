@@ -1,79 +1,91 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const ScanHistorySchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    ref: "User",
+    required: true,
   },
   barcode: {
     type: String,
-    required: true
+    required: true,
   },
   productData: {
     name: {
       type: String,
-      required: true
+      required: true,
     },
     brand: {
       type: String,
-      required: true
+      required: true,
     },
     imageUrl: {
       type: String,
-      default: ''
+      default: "",
     },
     healthScore: {
       type: Number,
       required: true,
       min: 0,
-      max: 100
+      max: 100,
     },
     nutritionInfo: {
       calories: {
         type: Number,
-        required: true
+        required: true,
       },
       protein: {
         type: Number,
-        required: true
+        required: true,
       },
       carbs: {
         type: Number,
-        required: true
+        required: true,
       },
       fat: {
         type: Number,
-        required: true
+        required: true,
       },
       fiber: {
         type: Number,
-        default: 0
+        default: 0,
       },
       sugar: {
         type: Number,
-        default: 0
+        default: 0,
       },
       sodium: {
         type: Number,
-        default: 0
-      }
+        default: 0,
+      },
     },
-    ingredients: [{
-      type: String
-    }],
-    allergens: [{
-      type: String
-    }]
+    ingredients: [
+      {
+        type: String,
+      },
+    ],
+    allergens: [
+      {
+        type: String,
+      },
+    ],
+    servingSize: {
+      type: String,
+      default: "100",
+    },
+    servingUnit: {
+      type: String,
+      default: "g",
+    },
   },
   scannedAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 // Create compound index for efficient queries
 ScanHistorySchema.index({ userId: 1, scannedAt: -1 });
 ScanHistorySchema.index({ userId: 1, barcode: 1 });
 
-module.exports = mongoose.model('ScanHistory', ScanHistorySchema); 
+module.exports = mongoose.model("ScanHistory", ScanHistorySchema);

@@ -1,5 +1,5 @@
-const productService = require('../services/productService');
-const ScanHistory = require('../models/ScanHistory');
+const productService = require("../services/productService");
+const ScanHistory = require("../models/ScanHistory");
 
 /**
  * Get product by barcode
@@ -9,25 +9,25 @@ const ScanHistory = require('../models/ScanHistory');
 exports.getProduct = async (req, res) => {
   try {
     const { barcode } = req.params;
-    
+
     if (!barcode) {
-      return res.status(400).json({ message: 'Barcode is required' });
+      return res.status(400).json({ message: "Barcode is required" });
     }
-    
+
     const product = await productService.getProduct(barcode);
-    
+
     if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(404).json({ message: "Product not found" });
     }
-    
+
     // Save to scan history
     try {
       // Check if this product was already scanned by this user
       const existingScan = await ScanHistory.findOne({
         userId: req.user.id,
-        barcode: barcode
+        barcode: barcode,
       });
-      
+
       if (!existingScan) {
         // Create new scan history entry
         await ScanHistory.create({
@@ -36,12 +36,14 @@ exports.getProduct = async (req, res) => {
           productData: {
             name: product.name,
             brand: product.brand,
-            imageUrl: product.imageUrl || '',
+            imageUrl: product.imageUrl || "",
             healthScore: product.healthScore,
             nutritionInfo: product.nutritionInfo,
             ingredients: product.ingredients || [],
-            allergens: product.allergens || []
-          }
+            allergens: product.allergens || [],
+            servingSize: product.servingSize || "100",
+            servingUnit: product.servingUnit || "g",
+          },
         });
       } else {
         // Update the scannedAt timestamp
@@ -49,13 +51,13 @@ exports.getProduct = async (req, res) => {
         await existingScan.save();
       }
     } catch (historyError) {
-      console.error('Error saving scan history:', historyError);
+      console.error("Error saving scan history:", historyError);
       // Don't fail the request if history save fails
     }
-    
+
     res.json(product);
   } catch (error) {
-    console.error('Error in getProduct controller:', error);
-    res.status(500).json({ message: 'Server error getting product' });
+    console.error("Error in getProduct controller:", error);
+    res.status(500).json({ message: "Server error getting product" });
   }
-}; 
+};
