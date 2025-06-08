@@ -24,14 +24,14 @@ exports.getProduct = async (req, res) => {
     try {
       // Check if this product was already scanned by this user
       const existingScan = await ScanHistory.findOne({
-        userId: req.user._id,
+        userId: req.user.id,
         barcode: barcode
       });
       
       if (!existingScan) {
         // Create new scan history entry
         await ScanHistory.create({
-          userId: req.user._id,
+          userId: req.user.id,
           barcode: barcode,
           productData: {
             name: product.name,
