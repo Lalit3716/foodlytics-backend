@@ -52,7 +52,7 @@ class AiService {
         config: {
           temperature: 0.4,
           maxOutputTokens: 800,
-          systemInstruction: systemPrompt,
+          systemInstruction: [systemPrompt],
         },
       });
 
