@@ -1,4 +1,5 @@
 const productService = require('../services/productService');
+const ScanHistory = require('../models/ScanHistory');
 
 /**
  * Get product by barcode
@@ -19,32 +20,42 @@ exports.getProduct = async (req, res) => {
       return res.status(404).json({ message: 'Product not found' });
     }
     
+    // Save to scan history
+    try {
+      // Check if this product was already scanned by this user
+      const existingScan = await ScanHistory.findOne({
+        userId: req.user._id,
+        barcode: barcode
+      });
+      
+      if (!existingScan) {
+        // Create new scan history entry
+        await ScanHistory.create({
+          userId: req.user._id,
+          barcode: barcode,
+          productData: {
+            name: product.name,
+            brand: product.brand,
+            imageUrl: product.imageUrl || '',
+            healthScore: product.healthScore,
+            nutritionInfo: product.nutritionInfo,
+            ingredients: product.ingredients || [],
+            allergens: product.allergens || []
+          }
+        });
+      } else {
+        // Update the scannedAt timestamp
+        existingScan.scannedAt = new Date();
+        await existingScan.save();
+      }
+    } catch (historyError) {
+      console.error('Error saving scan history:', historyError);
+      // Don't fail the request if history save fails
+    }
+    
     res.json(product);
   } catch (error) {
     console.error('Error in getProduct controller:', error);
     res.status(500).json({ message: 'Server error getting product' });
   }
-};
-
-/**
- * Handle image upload and analysis
- * @route POST /api/product/analyze-image
- * @access Private
- */
-exports.analyzeImage = async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No image file provided' });
-    }
-    
-    // In a real implementation, this would process the image with computer vision
-    // For now, we'll just return a placeholder message
-    res.json({ 
-      message: 'Image analysis is not implemented in this version',
-      imageReceived: true
-    });
-  } catch (error) {
-    console.error('Error in analyzeImage controller:', error);
-    res.status(500).json({ message: 'Server error analyzing image' });
-  }
-};
+}; 
