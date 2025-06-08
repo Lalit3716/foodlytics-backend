@@ -10,7 +10,7 @@ if (!GEMINI_API_KEY) {
 }
 
 // Initialize the Google Generative AI with the API key
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+const genAI = new GoogleGenAI({apiKey: GEMINI_API_KEY});
 
 /**
  * Service for interacting with Google's Gemini AI
@@ -25,7 +25,7 @@ class AiService {
   async getNutritionAdvice(userMessage, chatHistory = []) {
     try {
       // Access the generative model (Gemini)
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-001' });
       
       // System prompt to set context and constraints
       const systemPrompt = `You are a nutritional assistant for Foodlytics, a food analytics app. 
