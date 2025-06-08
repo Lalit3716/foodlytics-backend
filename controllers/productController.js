@@ -1,5 +1,6 @@
 const productService = require("../services/productService");
 const ScanHistory = require("../models/ScanHistory");
+const aiService = require("../services/aiService");
 
 /**
  * Get product by barcode
@@ -18,6 +19,55 @@ exports.getProduct = async (req, res) => {
 
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Get healthier recommendations using AI
+    let recommendations = null;
+    try {
+      const prompt = `Based on this product's nutritional profile, suggest 3 healthier alternatives:
+
+Product: ${product.name}
+Brand: ${product.brand}
+Health Score: ${product.healthScore}/100
+Nutrition per 100g:
+- Calories: ${product.nutritionInfo.calories} kcal
+- Protein: ${product.nutritionInfo.protein}g
+- Carbs: ${product.nutritionInfo.carbs}g
+- Fat: ${product.nutritionInfo.fat}g
+- Fiber: ${product.nutritionInfo.fiber}g
+- Sugar: ${product.nutritionInfo.sugar}g
+- Sodium: ${product.nutritionInfo.sodium}mg
+${
+  product.ingredients.length > 0
+    ? `Ingredients: ${product.ingredients.slice(0, 5).join(", ")}`
+    : ""
+}
+
+Please provide recommendations in this exact JSON format:
+{
+  "recommendations": [
+    {
+      "name": "Product name",
+      "imgUrl": "Product image url",
+      "barcode": "Barcode UPC code",
+      "reason": "Why this is healthier (max 50 words)",
+      "nutritionHighlights": ["Key benefit 1", "Key benefit 2"],
+      "category": "Same category as original product"
+    }
+  ],
+  "generalAdvice": "Brief advice about this type of product (max 50 words)"
+}`;
+
+      const aiResponse = await aiService.getNutritionAdvice(prompt);
+
+      // Parse the AI response to extract JSON
+      const jsonMatch = aiResponse.text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        recommendations = JSON.parse(jsonMatch[0]);
+      }
+    } catch (aiError) {
+      console.error("Error getting AI recommendations:", aiError);
+      // Don't fail the request if AI recommendations fail
     }
 
     // Save to scan history
@@ -55,7 +105,11 @@ exports.getProduct = async (req, res) => {
       // Don't fail the request if history save fails
     }
 
-    res.json(product);
+    // Include recommendations in the response
+    res.json({
+      ...product,
+      recommendations: recommendations,
+    });
   } catch (error) {
     console.error("Error in getProduct controller:", error);
     res.status(500).json({ message: "Server error getting product" });
