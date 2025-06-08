@@ -26,6 +26,8 @@ exports.getHistory = async (req, res) => {
       ingredients: item.productData.ingredients,
       allergens: item.productData.allergens,
       scannedAt: item.scannedAt,
+      servingSize: item.productData.servingSize,
+      servingUnit: item.productData.servingUnit,
     }));
 
     res.json({
