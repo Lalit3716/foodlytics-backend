@@ -10,7 +10,7 @@ const UserAnalytics = require("../models/UserAnalytics");
  */
 exports.getProduct = async (req, res) => {
   try {
-    const { barcode } = req.params;
+    const { barcode, analytics = true } = req.params;
 
     if (!barcode) {
       return res.status(400).json({ message: "Barcode is required" });
@@ -77,51 +77,55 @@ IMPORTANT:
       // Don't fail the request if AI recommendations fail
     }
 
-    // Save to scan history and update analytics
-    try {
-      // Check if this product was already scanned by this user
-      const existingScan = await ScanHistory.findOne({
-        userId: req.user.id,
-        barcode: barcode,
-      });
-
-      let isNewProduct = false;
-
-      if (!existingScan) {
-        // Create new scan history entry
-        await ScanHistory.create({
+    if (analytics) {
+      // Save to scan history and update analytics
+      try {
+        // Check if this product was already scanned by this user
+        const existingScan = await ScanHistory.findOne({
           userId: req.user.id,
           barcode: barcode,
-          productData: {
-            name: product.name,
-            brand: product.brand,
-            imageUrl: product.imageUrl || "",
-            healthScore: product.healthScore,
-            nutritionInfo: product.nutritionInfo,
-            ingredients: product.ingredients || [],
-            allergens: product.allergens || [],
-            servingSize: product.servingSize || "100",
-            servingUnit: product.servingUnit || "g",
-          },
         });
-        isNewProduct = true;
-      } else {
-        // Update the scannedAt timestamp
-        existingScan.scannedAt = new Date();
-        await existingScan.save();
-      }
 
-      // Update user analytics
-      try {
-        const userAnalytics = await UserAnalytics.getOrCreateForUser(req.user.id);
-        await userAnalytics.updateOnProductScan(product, isNewProduct);
-      } catch (analyticsError) {
-        console.error("Error updating user analytics:", analyticsError);
-        // Don't fail the request if analytics update fails
+        let isNewProduct = false;
+
+        if (!existingScan) {
+          // Create new scan history entry
+          await ScanHistory.create({
+            userId: req.user.id,
+            barcode: barcode,
+            productData: {
+              name: product.name,
+              brand: product.brand,
+              imageUrl: product.imageUrl || "",
+              healthScore: product.healthScore,
+              nutritionInfo: product.nutritionInfo,
+              ingredients: product.ingredients || [],
+              allergens: product.allergens || [],
+              servingSize: product.servingSize || "100",
+              servingUnit: product.servingUnit || "g",
+            },
+          });
+          isNewProduct = true;
+        } else {
+          // Update the scannedAt timestamp
+          existingScan.scannedAt = new Date();
+          await existingScan.save();
+        }
+
+        // Update user analytics
+        try {
+          const userAnalytics = await UserAnalytics.getOrCreateForUser(
+            req.user.id
+          );
+          await userAnalytics.updateOnProductScan(product, isNewProduct);
+        } catch (analyticsError) {
+          console.error("Error updating user analytics:", analyticsError);
+          // Don't fail the request if analytics update fails
+        }
+      } catch (historyError) {
+        console.error("Error saving scan history:", historyError);
+        // Don't fail the request if history save fails
       }
-    } catch (historyError) {
-      console.error("Error saving scan history:", historyError);
-      // Don't fail the request if history save fails
     }
 
     // Include recommendations in the response
