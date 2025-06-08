@@ -48,15 +48,21 @@ Please provide recommendations in this exact JSON format:
   "recommendations": [
     {
       "name": "Product name",
-      "imgUrl": "Product image url",
-      "barcode": "Barcode UPC code",
+      "imgUrl": "Leave empty string if no real image available",
+      "barcode": "Real barcode/UPC code if known, otherwise null",
       "reason": "Why this is healthier (max 50 words)",
       "nutritionHighlights": ["Key benefit 1", "Key benefit 2"],
       "category": "Same category as original product"
     }
   ],
   "generalAdvice": "Brief advice about this type of product (max 50 words)"
-}`;
+}
+
+IMPORTANT: 
+- For imgUrl: Only provide REAL, existing product image URLs from actual sources. If you don't have a real image URL, use an empty string "".
+- Do NOT use placeholder URLs like example.com, placeholder.com, or any made-up URLs.
+- For barcode: Only provide real, valid barcode/UPC codes if you know them. Otherwise, use null.
+- Recommend real, existing products that people can actually find in stores.`;
 
       const aiResponse = await aiService.getNutritionAdvice(prompt);
 
