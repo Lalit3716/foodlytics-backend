@@ -5,6 +5,7 @@ const connectDB = require('./config/database');
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const historyRoutes = require('./routes/historyRoutes');
+const consoleLogger = require('./middleware/consoleLogger');
 
 // Load environment variables
 dotenv.config();
@@ -18,6 +19,7 @@ connectDB();
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(consoleLogger);
 
 // Routes
 app.use('/api/auth', authRoutes);
