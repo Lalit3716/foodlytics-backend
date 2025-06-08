@@ -1,6 +1,7 @@
 const productService = require("../services/productService");
 const ScanHistory = require("../models/ScanHistory");
 const aiService = require("../services/aiService");
+const UserAnalytics = require("../models/UserAnalytics");
 
 /**
  * Get product by barcode
@@ -76,13 +77,15 @@ IMPORTANT:
       // Don't fail the request if AI recommendations fail
     }
 
-    // Save to scan history
+    // Save to scan history and update analytics
     try {
       // Check if this product was already scanned by this user
       const existingScan = await ScanHistory.findOne({
         userId: req.user.id,
         barcode: barcode,
       });
+
+      let isNewProduct = false;
 
       if (!existingScan) {
         // Create new scan history entry
@@ -101,10 +104,20 @@ IMPORTANT:
             servingUnit: product.servingUnit || "g",
           },
         });
+        isNewProduct = true;
       } else {
         // Update the scannedAt timestamp
         existingScan.scannedAt = new Date();
         await existingScan.save();
+      }
+
+      // Update user analytics
+      try {
+        const userAnalytics = await UserAnalytics.getOrCreateForUser(req.user.id);
+        await userAnalytics.updateOnProductScan(product, isNewProduct);
+      } catch (analyticsError) {
+        console.error("Error updating user analytics:", analyticsError);
+        // Don't fail the request if analytics update fails
       }
     } catch (historyError) {
       console.error("Error saving scan history:", historyError);
