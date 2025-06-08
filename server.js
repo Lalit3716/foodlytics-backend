@@ -5,6 +5,7 @@ const connectDB = require('./config/database');
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const historyRoutes = require('./routes/historyRoutes');
+const chatbotRoutes = require('./routes/chatbotRoutes');
 const consoleLogger = require('./middleware/consoleLogger');
 
 // Load environment variables
@@ -25,6 +26,7 @@ app.use(consoleLogger);
 app.use('/api/auth', authRoutes);
 app.use('/api/product', productRoutes);
 app.use('/api/history', historyRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 
 // Root route
 app.get('/', (req, res) => {
