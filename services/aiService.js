@@ -57,7 +57,7 @@ class AiService {
       });
 
       // Generate response
-      const result = await chat.sendMessage(userMessage);
+      const result = await chat.sendMessage({ message: userMessage });
       const response = result.text;
 
       return {
